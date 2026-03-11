@@ -2,7 +2,7 @@
 **Автор:** Гуреева Алина, М8О-102СВ-25
 
 ## ТЗ
-<img width="487" height="372" alt="тз" src="https://github.com/user-attachments/assets/436d4a1b-1a81-4d8e-9982-f24e0e9c13ac" />
+![image](https://github.com/gureeva07/system_design/raw/main/lab1/тз.png)
 ## Роли пользователей
 
 **Неавторизованный пользователь (гость)** — незарегистрированный или не вошедший в систему посетитель
