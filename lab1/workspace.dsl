@@ -13,7 +13,8 @@ workspace {
 
         # Пользователи системы
         guest = person "Неавторизированный пользователь (гость)"
-        authorized_user = person "Авторизированный пользователь"
+        authorized_user_sender = person "Авторизированный пользователь (отправитель)"
+        authorized_user_receiver = person "Авторизированный пользователь (получатель)"
         support_staff = person "Сотрудник технической поддержки"
 
         my_system = softwareSystem "Social network"{
@@ -81,16 +82,21 @@ workspace {
 
         # Внешние сервисы
         email_service = softwareSystem "Email-сервис" "Отправляет email-уведомления" {
+            tags "external"
             -> guest "Отправляет сообщение"
         }
         push_service = softwareSystem "Push-сервис" "Отправляет push-уведомления на устройства" {
-            -> authorized_user "Отправляет уведомление"
+            tags "external"
+            -> authorized_user_receiver "Отправляет уведомление"
         }
-        ads_service = softwareSystem "Реклама" "Система таргетированной рекламы"
+        ads_service = softwareSystem "Реклама" "Система таргетированной рекламы"{
+            tags "external"
+        }
 
         # Связи
         guest -> my_system "Регистрация, авторизация, просмотр публичных профилей и стен"
-        authorized_user -> my_system "Пишет на стену, отправляет сообщения, видит контент"
+        authorized_user_sender -> my_system "Пишет на стену, отправляет сообщения, видит контент"
+        authorized_user_receiver -> my_system "Получает сообщения, видит контент"
         support_staff -> my_system "Модерация пользователей и контента, работает с обращениями и тикетами"
         
         my_system -> email_service "Уведомление об авторизации" "HTTPS/REST"
@@ -100,8 +106,10 @@ workspace {
         guest -> my_system.web_app "Открывает сайт" "HTTPS"
         guest -> my_system.mobile_app "Открывает приложение" "HTTPS"
 
-        authorized_user -> my_system.web_app "Открывает сайт" "HTTPS"
-        authorized_user -> my_system.mobile_app "Открывает приложение" "HTTPS"
+        authorized_user_sender -> my_system.web_app "Открывает сайт" "HTTPS"
+        authorized_user_sender -> my_system.mobile_app "Открывает приложение" "HTTPS"
+        authorized_user_receiver -> my_system.web_app "Открывает сайт" "HTTPS"
+        authorized_user_receiver -> my_system.mobile_app "Открывает приложение" "HTTPS"
 
         support_staff -> my_system.web_app "Открывает сайт и использует админ-панель и панель поддержки" "HTTPS"
 
@@ -138,7 +146,7 @@ workspace {
         }
 
         dynamic my_system "SendMessage" "Динамическая диаграмма процесса отправки P2P-сообщения" {
-            1:  authorized_user -> my_system.web_app "Вводит текст и нажимает Отправить"
+            1:  authorized_user_sender -> my_system.web_app "Вводит текст и нажимает отправить"
             2:  my_system.web_app -> my_system.apiGateway "POST /api/chats/messages (получатель, текст)"
             3:  my_system.apiGateway -> my_system.chatService "POST /messages (те же данные)"
             4:  my_system.chatService -> my_system.userService "Проверяет существование получателя по id"
@@ -148,9 +156,10 @@ workspace {
             8:  my_system.chatService -> my_system.chatDb "Сохраняет сообщение со статусом Отправлено"
             9:  my_system.chatDb -> my_system.chatService "Подтверждение сохранения, возвращает id сообщения"
             10: my_system.chatService -> push_service "Уведомляет получателя о новом сообщении"
-            11: my_system.chatService -> my_system.apiGateway "Возвращает успешный ответ с id сообщения"
-            12: my_system.apiGateway -> my_system.web_app "Возвращает ответ"
-            13: my_system.web_app -> authorized_user "Отображает сообщение как доставленное"
+            11: push_service -> authorized_user_receiver "Доставляет push-уведомление"
+            12: my_system.chatService -> my_system.apiGateway "Возвращает успешный ответ с id сообщения"
+            13: my_system.apiGateway -> my_system.web_app "Возвращает ответ"
+            14: my_system.web_app -> authorized_user_sender "Отображает сообщение как доставленное"
             autoLayout
         }
 
@@ -170,6 +179,11 @@ workspace {
                 background #F599CE  
                 color #000000
             }
+            element "external" {
+                background #BBBBBB   
+                color #555555        
+                border dashed        
+}
         }
     }
 }
